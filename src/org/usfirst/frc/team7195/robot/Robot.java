@@ -7,24 +7,33 @@
 
 package org.usfirst.frc.team7195.robot;
 
-import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.Spark;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.command.Scheduler;
+
+import org.usfirst.frc.team7195.robot.commands.AutoDriveForward;
+import org.usfirst.frc.team7195.robot.commands.DriveWithJoystick;
+import org.usfirst.frc.team7195.robot.subsystems.ExampleSubsystem;
+import org.usfirst.frc.team7195.robot.subsystems.drivetrain;
+import org.usfirst.frc.team7195.robot.subsystems.forklift;
 
 /**
  * The VM is configured to automatically run this class, and to call the
- * functions corresponding to each mode, as described in the IterativeRobot
+ * functions corresponding to each mode, as described in the TimedRobot
  * documentation. If you change the name of this class or the package after
- * creating this project, you must also update the manifest file in the resource
- * directory.
+ * creating this project, you must also update the build.properties file in the
+ * project.
  */
-public class Robot extends IterativeRobot {
-	private DifferentialDrive m_robotDrive
-			= new DifferentialDrive(new Spark(0), new Spark(1));
-	private Joystick m_stick = new Joystick(0);
-	private Timer m_timer = new Timer();
+public class Robot extends TimedRobot {
+	public static final ExampleSubsystem kExampleSubsystem
+			= new ExampleSubsystem();
+	public static OI m_oi;
+
+	public static drivetrain m_drivetrain = new drivetrain();
+	public static forklift m_forklift = new forklift();
+	Timer autoTimer = new Timer();
+	//Command m_autonomousCommand;
+	//SendableChooser<Command> m_chooser = new SendableChooser<>();
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -32,15 +41,53 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
+		m_oi = new OI();
+		//m_chooser.addDefault("Default Auto", new AutoDriveForward());
+		//m_chooser.addObject("Auto Drive Forward", new AutoDriveForward());
+		//SmartDashboard.putData("Auto mode", m_chooser);
 	}
 
 	/**
-	 * This function is run once each time the robot enters autonomous mode.
+	 * This function is called once each time the robot enters Disabled mode.
+	 * You can use it to reset any subsystem information you want to clear when
+	 * the robot is disabled.
+	 */
+	@Override
+	public void disabledInit() {
+
+	}
+
+	@Override
+	public void disabledPeriodic() {
+		Scheduler.getInstance().run();
+	}
+
+	/**
+	 * This autonomous (along with the chooser code above) shows how to select
+	 * between different autonomous modes using the dashboard. The sendable
+	 * chooser code works with the Java SmartDashboard. If you prefer the
+	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
+	 * getString code to get the auto name from the text box below the Gyro
+	 *
+	 * <p>You can add additional auto modes by adding additional commands to the
+	 * chooser code above (like the commented example) or additional comparisons
+	 * to the switch structure below with additional strings & commands.
 	 */
 	@Override
 	public void autonomousInit() {
-		m_timer.reset();
-		m_timer.start();
+		//m_autonomousCommand = m_chooser.getSelected();
+		Scheduler.getInstance().add(new AutoDriveForward());
+		/*
+		 * String autoSelected = SmartDashboard.getString("Auto Selector",
+		 * "Default"); switch(autoSelected) { case "My Auto": autonomousCommand
+		 * = new MyAutoCommand(); break; case "Default Auto": default:
+		 * autonomousCommand = new ExampleCommand(); break; }
+		 */
+
+		// schedule the autonomous command (example)
+		/* if (m_autonomousCommand != null) {
+			m_autonomousCommand.start();
+		} */
 	}
 
 	/**
@@ -48,27 +95,28 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void autonomousPeriodic() {
-		// Drive for 2 seconds
-		if (m_timer.get() < 2.0) {
-			m_robotDrive.arcadeDrive(0.5, 0.0); // drive forwards half speed
-		} else {
-			m_robotDrive.stopMotor(); // stop robot
-		}
+		Scheduler.getInstance().run();
 	}
 
-	/**
-	 * This function is called once each time the robot enters teleoperated mode.
-	 */
 	@Override
 	public void teleopInit() {
+		// This makes sure that the autonomous stops running when
+		// teleop starts running. If you want the autonomous to
+		// continue until interrupted by another command, remove
+		// this line or comment it out.
+		/*if (m_autonomousCommand != null) {
+			m_autonomousCommand.cancel();
+		}*/
+		Scheduler.getInstance().add(new DriveWithJoystick());
 	}
-
+	
 	/**
-	 * This function is called periodically during teleoperated mode.
+	 * This function is called periodically during operator control.
 	 */
 	@Override
 	public void teleopPeriodic() {
-		m_robotDrive.arcadeDrive(m_stick.getY(), m_stick.getX());
+		Scheduler.getInstance().run();
+		
 	}
 
 	/**
@@ -76,6 +124,7 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void testPeriodic() {
-		m_robotDrive.arcadeDrive(0.10, 1.0);
 	}
+	
+	
 }
